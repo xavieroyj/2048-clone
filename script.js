@@ -55,13 +55,15 @@ function generateTile() {
 
 function updateBoard() {
     gridContainer.innerHTML = '';
-    board.forEach(row => {
-        row.forEach(value => {
+    board.forEach((row, rIndex) => {
+        row.forEach((value, cIndex) => {
             const tile = document.createElement('div');
-            tile.classList.add('tile');
-            if (value !== 0) {
-                tile.classList.add(`tile-${value}`);
-                tile.textContent = value;
+            tile.className = value ? `tile tile-${value}` : 'tile';
+            if (value) {
+                const number = document.createElement('div');
+                number.className = 'number';
+                number.textContent = value;
+                tile.appendChild(number);
             }
             gridContainer.appendChild(tile);
         });
@@ -253,4 +255,51 @@ function handleKeyPress(event) {
 
 document.addEventListener('keydown', handleKeyPress);
 restartButton.addEventListener('click', startGame);
+
+// Touch event handling
+let touchStartX = 0;
+let touchStartY = 0;
+let touchEndX = 0;
+let touchEndY = 0;
+
+document.addEventListener('touchstart', function(event) {
+    touchStartX = event.touches[0].clientX;
+    touchStartY = event.touches[0].clientY;
+}, false);
+
+document.addEventListener('touchmove', function(event) {
+    event.preventDefault();
+}, { passive: false });
+
+document.addEventListener('touchend', function(event) {
+    touchEndX = event.changedTouches[0].clientX;
+    touchEndY = event.changedTouches[0].clientY;
+    
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+    
+    // Minimum swipe distance to trigger a move (in pixels)
+    const minSwipeDistance = 30;
+    
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        // Horizontal swipe
+        if (Math.abs(deltaX) > minSwipeDistance) {
+            if (deltaX > 0) {
+                moveRight();
+            } else {
+                moveLeft();
+            }
+        }
+    } else {
+        // Vertical swipe
+        if (Math.abs(deltaY) > minSwipeDistance) {
+            if (deltaY > 0) {
+                moveDown();
+            } else {
+                moveUp();
+            }
+        }
+    }
+}, false);
+
 startGame();
