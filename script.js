@@ -261,17 +261,23 @@ let touchStartX = 0;
 let touchStartY = 0;
 let touchEndX = 0;
 let touchEndY = 0;
+let isSwiping = false;
 
-document.addEventListener('touchstart', function(event) {
+gridContainer.addEventListener('touchstart', function(event) {
     touchStartX = event.touches[0].clientX;
     touchStartY = event.touches[0].clientY;
-}, false);
-
-document.addEventListener('touchmove', function(event) {
-    event.preventDefault();
+    isSwiping = true;
 }, { passive: false });
 
-document.addEventListener('touchend', function(event) {
+gridContainer.addEventListener('touchmove', function(event) {
+    if (isSwiping) {
+        event.preventDefault();
+    }
+}, { passive: false });
+
+gridContainer.addEventListener('touchend', function(event) {
+    if (!isSwiping) return;
+    
     touchEndX = event.changedTouches[0].clientX;
     touchEndY = event.changedTouches[0].clientY;
     
@@ -280,26 +286,44 @@ document.addEventListener('touchend', function(event) {
     
     // Minimum swipe distance to trigger a move (in pixels)
     const minSwipeDistance = 30;
+    let moved = false;
     
     if (Math.abs(deltaX) > Math.abs(deltaY)) {
         // Horizontal swipe
         if (Math.abs(deltaX) > minSwipeDistance) {
             if (deltaX > 0) {
-                moveRight();
+                moved = moveRight();
             } else {
-                moveLeft();
+                moved = moveLeft();
             }
         }
     } else {
         // Vertical swipe
         if (Math.abs(deltaY) > minSwipeDistance) {
             if (deltaY > 0) {
-                moveDown();
+                moved = moveDown();
             } else {
-                moveUp();
+                moved = moveUp();
             }
         }
     }
-}, false);
+    
+    if (moved) {
+        generateTile();
+        updateBoard();
+        if (isGameOver()) {
+            showGameOver();
+        }
+    }
+    
+    isSwiping = false;
+}, { passive: false });
+
+// Prevent scrolling when touching the game container
+gridContainer.addEventListener('touchstart', function(event) {
+    if (event.touches.length === 1) {
+        event.preventDefault();
+    }
+}, { passive: false });
 
 startGame();
