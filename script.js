@@ -257,57 +257,44 @@ document.addEventListener('keydown', handleKeyPress);
 restartButton.addEventListener('click', startGame);
 
 // Touch event handling
-let touchStartX = 0;
-let touchStartY = 0;
-let touchEndX = 0;
-let touchEndY = 0;
-let isSwiping = false;
+let touchStartX = null;
+let touchStartY = null;
 
-gridContainer.addEventListener('touchstart', function(event) {
-    touchStartX = event.touches[0].clientX;
-    touchStartY = event.touches[0].clientY;
-    isSwiping = true;
-}, { passive: false });
+function handleTouchStart(event) {
+    event.preventDefault();
+    const touch = event.touches[0];
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+}
 
-gridContainer.addEventListener('touchmove', function(event) {
-    if (isSwiping) {
-        event.preventDefault();
+function handleTouchMove(event) {
+    event.preventDefault();
+}
+
+function handleTouchEnd(event) {
+    if (!touchStartX || !touchStartY) {
+        return;
     }
-}, { passive: false });
 
-gridContainer.addEventListener('touchend', function(event) {
-    if (!isSwiping) return;
-    
-    touchEndX = event.changedTouches[0].clientX;
-    touchEndY = event.changedTouches[0].clientY;
-    
-    const deltaX = touchEndX - touchStartX;
-    const deltaY = touchEndY - touchStartY;
-    
-    // Minimum swipe distance to trigger a move (in pixels)
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - touchStartX;
+    const deltaY = touch.clientY - touchStartY;
+
+    // Reset touch coordinates
+    touchStartX = null;
+    touchStartY = null;
+
     const minSwipeDistance = 30;
     let moved = false;
-    
-    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
         // Horizontal swipe
-        if (Math.abs(deltaX) > minSwipeDistance) {
-            if (deltaX > 0) {
-                moved = moveRight();
-            } else {
-                moved = moveLeft();
-            }
-        }
-    } else {
+        moved = deltaX > 0 ? moveRight() : moveLeft();
+    } else if (Math.abs(deltaY) > minSwipeDistance) {
         // Vertical swipe
-        if (Math.abs(deltaY) > minSwipeDistance) {
-            if (deltaY > 0) {
-                moved = moveDown();
-            } else {
-                moved = moveUp();
-            }
-        }
+        moved = deltaY > 0 ? moveDown() : moveUp();
     }
-    
+
     if (moved) {
         generateTile();
         updateBoard();
@@ -315,15 +302,11 @@ gridContainer.addEventListener('touchend', function(event) {
             showGameOver();
         }
     }
-    
-    isSwiping = false;
-}, { passive: false });
+}
 
-// Prevent scrolling when touching the game container
-gridContainer.addEventListener('touchstart', function(event) {
-    if (event.touches.length === 1) {
-        event.preventDefault();
-    }
-}, { passive: false });
+// Add touch event listeners to the grid container
+gridContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
+gridContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
+gridContainer.addEventListener('touchend', handleTouchEnd, { passive: false });
 
 startGame();
